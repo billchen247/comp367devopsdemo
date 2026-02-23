@@ -121,7 +121,9 @@ pipeline {
                 script {
 
                     // Read Sonar task info
-                    def props = readProperties file: 'target/sonar/report-task.txt'
+                    // def props = readProperties file: 'target/sonar/report-task.txt' // only for maven sonar 
+                    def props = readProperties file: '.scannerwork/report-task.txt' // for sonarscanner cli
+
                     def ceTaskId = props['ceTaskId']
                     def serverUrl = props['serverUrl']
 
