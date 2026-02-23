@@ -10,7 +10,7 @@ pipeline {
             name: 'GITHUB_REPO_NAME',
             defaultValue: 'billchen247/JacocoExample',
             description: 'Enter the Github repo name to build'
-        ),
+        )
         string(
             name: 'BRANCH_NAME',
             defaultValue: 'master',
