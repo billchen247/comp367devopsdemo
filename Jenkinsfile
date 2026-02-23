@@ -98,7 +98,7 @@ pipeline {
                      sh """
                         ${scannerHome}/bin/sonar-scanner \
                           -Dsonar.host.url=http://host.docker.internal:19000 \
-                          -Dsonar.login=${env.SONAR_TOKEN}
+                          -Dsonar.login=${env.SONAR_TOKEN} \
                           -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
                           -Dsonar.projectName="My Java Project" \
                           -Dsonar.projectVersion=1.0 \
