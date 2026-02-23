@@ -91,11 +91,14 @@ pipeline {
         stage('SonarQube Analysis') {
             environment {
                 scannerHome = tool 'SonarScanner'
+                SONAR_TOKEN = credentials('sonar-token')
             }
             steps {
                 withSonarQubeEnv('LocalSonar') {
                      sh """
                         ${scannerHome}/bin/sonar-scanner \
+                          -Dsonar.host.url=http://host.docker.internal:19000 \
+                          -Dsonar.login=${env.SONAR_TOKEN}
                           -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
                           -Dsonar.projectName="My Java Project" \
                           -Dsonar.projectVersion=1.0 \
@@ -113,14 +116,69 @@ pipeline {
             
         }
 
-        stage('Quality Gate') {
+        stage('Check Quality Gate (Pull Model)') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                script {
+
+                    // Read Sonar task info
+                    def props = readProperties file: 'target/sonar/report-task.txt'
+                    def ceTaskId = props['ceTaskId']
+                    def serverUrl = props['serverUrl']
+
+                    echo "CE Task ID: ${ceTaskId}"
+                    echo "Server URL: ${serverUrl}"
+
+                    // Poll until analysis complete
+                    timeout(time: 5, unit: 'MINUTES') {
+                        waitUntil {
+                            def response = sh(
+                                script: """
+                                curl -s -u ${SONAR_AUTH_TOKEN}: \
+                                ${serverUrl}/api/ce/task?id=${ceTaskId}
+                                """,
+                                returnStdout: true
+                            ).trim()
+
+                            def json = readJSON text: response
+                            def status = json.task.status
+
+                            echo "Current CE task status: ${status}"
+
+                            if (status == "SUCCESS") {
+                                env.ANALYSIS_ID = json.task.analysisId
+                                return true
+                            }
+
+                            if (status == "FAILED" || status == "CANCELED") {
+                                error "SonarQube analysis failed"
+                            }
+
+                            sleep 5
+                            return false
+                        }
+                    }
+
+                    // Check Quality Gate
+                    def qgResponse = sh(
+                        script: """
+                        curl -s -u ${SONAR_AUTH_TOKEN}: \
+                        ${serverUrl}/api/qualitygates/project_status?analysisId=${env.ANALYSIS_ID}
+                        """,
+                        returnStdout: true
+                    ).trim()
+
+                    def qgJson = readJSON text: qgResponse
+                    def qgStatus = qgJson.projectStatus.status
+
+                    echo "Quality Gate Status: ${qgStatus}"
+
+                    if (qgStatus != "OK") {
+                        error "Pipeline failed due to Quality Gate: ${qgStatus}"
+                    }
                 }
             }
         }
-
+        
         stage('Package') {
             steps {
                 echo "Packaging application..."
