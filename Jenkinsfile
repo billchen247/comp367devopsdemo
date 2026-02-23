@@ -72,6 +72,18 @@ pipeline {
             }
         }
 
+        stage('Prepare Sonar Project Key') {
+            steps {
+                script {
+                    // sanitize and convert github repo name to sonarqube project key
+                    env.SONAR_PROJECT_KEY = params.GITHUB_REPO_NAME
+                                                    .replaceAll('/', '_')
+                                                    .replaceAll('[^a-zA-Z0-9_.-]', '')
+                    echo "Sonar Project Key: ${env.SONAR_PROJECT_KEY}"
+                }
+            }
+        }
+
         stage('SonarQube Analysis') {
             environment {
                 scannerHome = tool 'SonarScanner'
@@ -80,6 +92,9 @@ pipeline {
                 withSonarQubeEnv('LocalSonar') {
                     sh """
                        mvn sonar:sonar 
+                       -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
+                       -Dsonar.host.url=http://localhost:19000 \
+                       -Dsonar.login=${sonar-token}
                     """
                 }
             }
