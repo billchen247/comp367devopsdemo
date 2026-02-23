@@ -91,15 +91,12 @@ pipeline {
         stage('SonarQube Analysis') {
             environment {
                 scannerHome = tool 'SonarScanner'
-                SONAR_TOKEN = credentials('sonar-token')
             }
             steps {
                 withSonarQubeEnv('LocalSonar') {
                     sh """
                        mvn sonar:sonar \
-                       -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-                       -Dsonar.host.url=http://host.docker.internal:19000 \
-                       -Dsonar.login=${env.SONAR_TOKEN}
+                       -Dsonar.projectKey=${env.SONAR_PROJECT_KEY}
                     """
                 }
             }
