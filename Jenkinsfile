@@ -97,9 +97,14 @@ pipeline {
                      sh """
                         ${scannerHome}/bin/sonar-scanner \
                           -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-                          -Dsonar.sources=src \
-                          -Dsonar.projectName="My Project" \
-                          -Dsonar.java.binaries=target/classes
+                          -Dsonar.projectName="My Java Project" \
+                          -Dsonar.projectVersion=1.0 \
+                          -Dsonar.sources=src/main/java \
+                          -Dsonar.tests=src/test/java \
+                          -Dsonar.java.binaries=target/classes \
+                          -Dsonar.java.test.binaries=target/test-classes \
+                          -Dsonar.sourceEncoding=UTF-8 \
+                          -Dsonar.language=java
                         """
                     
                     
