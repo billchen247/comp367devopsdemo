@@ -19,14 +19,15 @@ pipeline {
     }
 
     environment {
-        APP_NAME = "week6demo-app"
-        DOCKER_IMAGE = "myrepo/week6demo-app:latest"
+        APP_NAME = "week7demo-app"
+        DOCKER_IMAGE = "myrepo/week7demo-app:latest"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
+                echo "fully working for this week demo"
                 echo "Checking out source code..."
                 echo "Checking out source code from branch: ${params.BRANCH_NAME} on github repo ${params.GITHUB_REPO_NAME}"
 
