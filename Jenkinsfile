@@ -31,7 +31,7 @@ pipeline {
                 echo "Checking out source code from branch: ${params.BRANCH_NAME} on github repo ${params.GITHUB_REPO_NAME}"
 
                 git branch: "${params.BRANCH_NAME}",
-                    url: 'https://github.com/${params.GITHUB_REPO_NAME}'
+                    url: "https://github.com/${params.GITHUB_REPO_NAME}"
             }
         }
 
