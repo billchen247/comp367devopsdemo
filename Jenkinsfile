@@ -7,6 +7,11 @@ pipeline {
     }
     parameters {
         string(
+            name: 'GITHUB_REPO_NAME',
+            defaultValue: 'billchen247/JacocoExample',
+            description: 'Enter the Github repo name to build'
+        ),
+        string(
             name: 'BRANCH_NAME',
             defaultValue: 'master',
             description: 'Enter the Git branch to build'
@@ -23,10 +28,10 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Checking out source code..."
-                echo "Checking out source code from branch: ${params.BRANCH_NAME}"
+                echo "Checking out source code from branch: ${params.BRANCH_NAME} on github repo ${params.GITHUB_REPO_NAME}"
 
                 git branch: "${params.BRANCH_NAME}",
-                    url: 'https://github.com/billchen247/JacocoExample'
+                    url: 'https://github.com/${params.GITHUB_REPO_NAME}'
             }
         }
 
