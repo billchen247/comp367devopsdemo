@@ -92,9 +92,7 @@ pipeline {
                 withSonarQubeEnv('LocalSonar') {
                     sh """
                        mvn sonar:sonar 
-                       -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-                       -Dsonar.host.url=http://localhost:19000 \
-                       -Dsonar.login=${sonar-token}
+                       -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} 
                     """
                 }
             }
