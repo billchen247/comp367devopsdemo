@@ -94,10 +94,14 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('LocalSonar') {
-                    sh """
-                       mvn sonar:sonar \
-                       -Dsonar.projectKey=${env.SONAR_PROJECT_KEY}
-                    """
+                     sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                          -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
+                          -Dsonar.sources=. \
+                          -Dsonar.projectName="My Project"
+                        """
+                    
+                    
                 }
             }
             
