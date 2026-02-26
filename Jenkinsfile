@@ -103,6 +103,8 @@ pipeline {
                     env.JAR_FILE = "target/${artifactId}-${version}.jar"
         
                     echo "JAR_FILE set to: ${env.JAR_FILE}"
+                    env.VERSION = "${version}"
+                    echo "release package VERSION set to: ${env.VERSION}"
                 }
             }
         }
@@ -112,6 +114,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'githubpat', variable: 'GITHUB_TOKEN')]) {
                     sh '''
                         echo "Using packaged artifact: $JAR_FILE"
+                        echo "Using artifact package release version: $VERSION"
         
                         echo "Creating GitHub Release..."
         
