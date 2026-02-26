@@ -219,6 +219,17 @@ pipeline {
             }
         }
 
+        
+        stage('start the application') {
+            steps {
+                sh '''
+                    echo "demo to start the application by artifact package in local"
+                    java -jar target/JacocoExample-0.0.1-SNAPSHOT.jar --server.port=8081
+                '''
+                
+            }
+        }
+
         stage('Cleanup') {
             steps {
                 cleanWs()
