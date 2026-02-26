@@ -86,23 +86,31 @@ pipeline {
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
+
+        stage('Prepare Artifact Info') {
+            steps {
+                script {
+                    def artifactId = sh(
+                        script: "mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout",
+                        returnStdout: true
+                    ).trim()
+        
+                    def version = sh(
+                        script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout",
+                        returnStdout: true
+                    ).trim()
+        
+                    env.JAR_FILE = "target/${artifactId}-${version}.jar"
+        
+                    echo "JAR_FILE set to: ${env.JAR_FILE}"
+                }
+            }
+        }
         
         stage('Upload to GitHub Release') {
             steps {
                 withCredentials([string(credentialsId: 'githubpat', variable: 'GITHUB_TOKEN')]) {
                     sh '''
-                        echo "Reading Maven project info..."
-        
-                        ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-                        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-        
-                        JAR_FILE=target/${ARTIFACT_ID}-${VERSION}.jar
-        
-                        if [ ! -f "$JAR_FILE" ]; then
-                            echo "ERROR: Artifact not found!"
-                            exit 1
-                        fi
-        
                         echo "Using packaged artifact: $JAR_FILE"
         
                         echo "Creating GitHub Release..."
@@ -278,7 +286,8 @@ pipeline {
             steps {
                 sh '''
                     echo "demo to start the application by artifact package in local"
-                    java -jar target/JacocoExample-0.0.1-SNAPSHOT.jar --server.port=8081
+                    echo "Using packaged artifact: $JAR_FILE"
+                    java -jar  $JAR_FILE --server.port=8081
                 '''
                 
             }
