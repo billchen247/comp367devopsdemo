@@ -24,6 +24,8 @@ pipeline {
     environment {
         APP_NAME = "week7demo-app"
         DOCKER_IMAGE = "myrepo/week7demo-app:latest"
+        GITHUB_REPO_NAME = "${params.GITHUB_REPO_NAME}"
+        BRANCH_NAME = "${params.BRANCH_NAME}"
     }
 
     stages {
@@ -75,6 +77,56 @@ pipeline {
                 )
             }
         }
+
+        stage('Upload to GitHub Release') {
+            steps {
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        echo "Reading Maven project info..."
+        
+                        ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+                        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        
+                        JAR_FILE=target/${ARTIFACT_ID}-${VERSION}.jar
+        
+                        if [ ! -f "$JAR_FILE" ]; then
+                            echo "ERROR: Artifact not found!"
+                            exit 1
+                        fi
+        
+                        echo "Using packaged artifact: $JAR_FILE"
+        
+                        echo "Creating GitHub Release..."
+        
+                        RESPONSE=$(curl -s -X POST \
+                          -H "Authorization: token $GITHUB_TOKEN" \
+                          -H "Accept: application/vnd.github+json" \
+                          https://api.github.com/repos/${GITHUB_REPO_NAME}/releases \
+                          -d "{\\"tag_name\\":\\"v$VERSION\\",\\"name\\":\\"v$VERSION\\",\\"generate_release_notes\\":true}")
+        
+                        RELEASE_ID=$(echo $RESPONSE | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
+        
+                        echo "Uploading artifact..."
+        
+                        curl -X POST \
+                          -H "Authorization: token $GITHUB_TOKEN" \
+                          -H "Content-Type: application/java-archive" \
+                          --data-binary @$JAR_FILE \
+                          "https://uploads.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets?name=$(basename $JAR_FILE)"
+        
+                        echo "Release completed successfully!"
+                    '''
+                }
+            }
+        }
+
+        // gating part before CD
+        stage('Gating before CD') {
+            steps {
+                echo "check some mockup gating before CD. like check change order approval or not"
+            }
+        }
+        
 
         stage('Prepare Sonar Project Key') {
             steps {
