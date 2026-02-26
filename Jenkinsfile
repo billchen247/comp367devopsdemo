@@ -78,6 +78,15 @@ pipeline {
             }
         }
 
+        
+        stage('Package') {
+            steps {
+                echo "Packaging application..."
+                sh 'mvn package -DskipTests'
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+        
         stage('Upload to GitHub Release') {
             steps {
                 withCredentials([string(credentialsId: 'githubpat', variable: 'GITHUB_TOKEN')]) {
@@ -235,13 +244,6 @@ pipeline {
             }
         }
         
-        stage('Package') {
-            steps {
-                echo "Packaging application..."
-                sh 'mvn package -DskipTests'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
 
         // ------------------------
         // MOCK CD SECTION
