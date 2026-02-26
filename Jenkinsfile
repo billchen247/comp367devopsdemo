@@ -1,7 +1,7 @@
 pipeline {
     agent any
     triggers {
-        cron('H/5 * * * 2')
+        cron('H/5 * * * 4')
     }
 
     tools {
@@ -75,6 +75,22 @@ pipeline {
                 )
             }
         }
+        
+        stage('Package') {
+            steps {
+                echo "Packaging application..."
+                sh 'mvn package -DskipTests'
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+
+        // gating part before CD
+        stage('Gating before CD') {
+            steps {
+                echo "check some mockup gating before CD. like check change order approval or not"
+            }
+        }
+        
 
         stage('Prepare Sonar Project Key') {
             steps {
@@ -111,13 +127,7 @@ pipeline {
             }
         }
 
-        stage('Package') {
-            steps {
-                echo "Packaging application..."
-                sh 'mvn package -DskipTests'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
+       
 
         // ------------------------
         // MOCK CD SECTION
