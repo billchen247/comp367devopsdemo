@@ -80,7 +80,7 @@ pipeline {
 
         stage('Upload to GitHub Release') {
             steps {
-                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                withCredentials([string(credentialsId: 'githubpat', variable: 'GITHUB_TOKEN')]) {
                     sh '''
                         echo "Reading Maven project info..."
         
