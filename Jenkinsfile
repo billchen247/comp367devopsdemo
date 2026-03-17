@@ -122,7 +122,7 @@ pipeline {
                           -H "Authorization: token $GITHUB_TOKEN" \
                           https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/tags/$TAG)
         
-                        RELEASE_ID=$(echo $RESPONSE | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
+                        RELEASE_ID=$(echo $RESPONSE | grep -m1 -o '"id":[[:space:]]*[0-9]*' | sed 's/[^0-9]//g')
         
                         if [ -z "$RELEASE_ID" ]; then
                             echo "Creating release..."
@@ -132,7 +132,7 @@ pipeline {
                               https://api.github.com/repos/${GITHUB_REPO_NAME}/releases \
                               -d "{\\"tag_name\\":\\"$TAG\\",\\"name\\":\\"$TAG\\"}")
         
-                            RELEASE_ID=$(echo $RESPONSE | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
+                            RELEASE_ID=$(echo $RESPONSE | grep -m1 -o '"id":[[:space:]]*[0-9]*' | sed 's/[^0-9]//g')
                         fi
         
                         echo "Check asset..."
