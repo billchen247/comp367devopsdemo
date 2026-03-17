@@ -122,7 +122,9 @@ pipeline {
                           -H "Authorization: token $GITHUB_TOKEN" \
                           https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/tags/$TAG)
         
-                        RELEASE_ID=$(echo $RESPONSE | grep -m1 -o '"id":[[:space:]]*[0-9]*' | sed 's/[^0-9]//g')
+                        RELEASE_ID=$(echo "$RESPONSE" \
+                                      | grep -m1 -o '"id":[[:space:]]*[0-9]*' \
+                                      | grep -o '[0-9]*')
         
                         if [ -z "$RELEASE_ID" ]; then
                             echo "Creating release..."
@@ -132,7 +134,9 @@ pipeline {
                               https://api.github.com/repos/${GITHUB_REPO_NAME}/releases \
                               -d "{\\"tag_name\\":\\"$TAG\\",\\"name\\":\\"$TAG\\"}")
         
-                            RELEASE_ID=$(echo $RESPONSE | grep -m1 -o '"id":[[:space:]]*[0-9]*' | sed 's/[^0-9]//g')
+                             RELEASE_ID=$(echo "$RESPONSE" \
+                                      | grep -m1 -o '"id":[[:space:]]*[0-9]*' \
+                                      | grep -o '[0-9]*')
                         fi
         
                         echo "Check asset..."
@@ -142,10 +146,9 @@ pipeline {
                           https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets)
                         
                         ASSET_ID=$(echo "$ASSET_RESPONSE" \
-                          | grep -B3 "$ASSET_NAME" \
-                          | grep '"id":' \
-                          | head -1 \
-                          | sed 's/[^0-9]//g')
+                                  | grep -A1 "$ASSET_NAME" \
+                                  | grep -m1 '"id":' \
+                                  | grep -o '[0-9]\+')
         
                         if [ ! -z "$ASSET_ID" ]; then
                             echo "Deleting old asset..."
