@@ -137,10 +137,15 @@ pipeline {
         
                         echo "Check asset..."
         
-                        ASSET_ID=$(curl -s \
+                        ASSET_RESPONSE=$(curl -s \
                           -H "Authorization: token $GITHUB_TOKEN" \
-                          https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets \
-                          | grep -B3 "$ASSET_NAME" | grep '"id":' | head -1 | grep -o '[0-9]*')
+                          https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets)
+                        
+                        ASSET_ID=$(echo "$ASSET_RESPONSE" \
+                          | grep -B3 "$ASSET_NAME" \
+                          | grep '"id":' \
+                          | head -1 \
+                          | sed 's/[^0-9]//g')
         
                         if [ ! -z "$ASSET_ID" ]; then
                             echo "Deleting old asset..."
