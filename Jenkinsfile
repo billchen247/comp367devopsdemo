@@ -113,59 +113,52 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'githubpat', variable: 'GITHUB_TOKEN')]) {
                     sh '''
-                        echo "Using packaged artifact: $JAR_FILE"
-                        echo "Using artifact package release version: $VERSION"
-        
                         TAG="v$VERSION"
                         ASSET_NAME=$(basename $JAR_FILE)
         
-                        echo "Checking if release already exists..."
+                        echo "Check release..."
         
-                        RELEASE_RESPONSE=$(curl -s \
+                        RESPONSE=$(curl -s \
                           -H "Authorization: token $GITHUB_TOKEN" \
-                          -H "Accept: application/vnd.github+json" \
                           https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/tags/$TAG)
         
-                        RELEASE_ID=$(echo $RELEASE_RESPONSE | jq -r '.id')
+                        RELEASE_ID=$(echo $RESPONSE | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
         
-                        if [ "$RELEASE_ID" = "null" ] || [ -z "$RELEASE_ID" ]; then
-                            echo "Release does not exist. Creating new release..."
+                        if [ -z "$RELEASE_ID" ]; then
+                            echo "Creating release..."
         
-                            CREATE_RESPONSE=$(curl -s -X POST \
+                            RESPONSE=$(curl -s -X POST \
                               -H "Authorization: token $GITHUB_TOKEN" \
-                              -H "Accept: application/vnd.github+json" \
                               https://api.github.com/repos/${GITHUB_REPO_NAME}/releases \
-                              -d "{\\"tag_name\\":\\"$TAG\\",\\"name\\":\\"$TAG\\",\\"generate_release_notes\\":true}")
+                              -d "{\\"tag_name\\":\\"$TAG\\",\\"name\\":\\"$TAG\\"}")
         
-                            RELEASE_ID=$(echo $CREATE_RESPONSE | jq -r '.id')
-                        else
-                            echo "Release already exists. Using RELEASE_ID=$RELEASE_ID"
+                            RELEASE_ID=$(echo $RESPONSE | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
                         fi
         
-                        echo "Checking if asset already exists..."
+                        echo "Check asset..."
         
                         ASSET_ID=$(curl -s \
                           -H "Authorization: token $GITHUB_TOKEN" \
                           https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets \
-                          | jq -r ".[] | select(.name==\\"$ASSET_NAME\\") | .id")
+                          | grep -B3 "$ASSET_NAME" | grep '"id":' | head -1 | grep -o '[0-9]*')
         
-                        if [ ! -z "$ASSET_ID" ] && [ "$ASSET_ID" != "null" ]; then
-                            echo "Asset exists. Deleting old asset id=$ASSET_ID"
+                        if [ ! -z "$ASSET_ID" ]; then
+                            echo "Deleting old asset..."
         
                             curl -s -X DELETE \
                               -H "Authorization: token $GITHUB_TOKEN" \
                               https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/assets/$ASSET_ID
                         fi
         
-                        echo "Uploading new artifact..."
+                        echo "Uploading asset..."
         
-                        curl -s -X POST \
+                        curl -X POST \
                           -H "Authorization: token $GITHUB_TOKEN" \
                           -H "Content-Type: application/java-archive" \
                           --data-binary @$JAR_FILE \
                           "https://uploads.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets?name=$ASSET_NAME"
         
-                        echo "Release upload completed successfully!"
+                        echo "Done!"
                     '''
                 }
             }
