@@ -116,25 +116,56 @@ pipeline {
                         echo "Using packaged artifact: $JAR_FILE"
                         echo "Using artifact package release version: $VERSION"
         
-                        echo "Creating GitHub Release..."
+                        TAG="v$VERSION"
+                        ASSET_NAME=$(basename $JAR_FILE)
         
-                        RESPONSE=$(curl -s -X POST \
+                        echo "Checking if release already exists..."
+        
+                        RELEASE_RESPONSE=$(curl -s \
                           -H "Authorization: token $GITHUB_TOKEN" \
                           -H "Accept: application/vnd.github+json" \
-                          https://api.github.com/repos/${GITHUB_REPO_NAME}/releases \
-                          -d "{\\"tag_name\\":\\"v$VERSION\\",\\"name\\":\\"v$VERSION\\",\\"generate_release_notes\\":true}")
+                          https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/tags/$TAG)
         
-                        RELEASE_ID=$(echo $RESPONSE | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
+                        RELEASE_ID=$(echo $RELEASE_RESPONSE | jq -r '.id')
         
-                        echo "Uploading artifact..."
+                        if [ "$RELEASE_ID" = "null" ] || [ -z "$RELEASE_ID" ]; then
+                            echo "Release does not exist. Creating new release..."
         
-                        curl -X POST \
+                            CREATE_RESPONSE=$(curl -s -X POST \
+                              -H "Authorization: token $GITHUB_TOKEN" \
+                              -H "Accept: application/vnd.github+json" \
+                              https://api.github.com/repos/${GITHUB_REPO_NAME}/releases \
+                              -d "{\\"tag_name\\":\\"$TAG\\",\\"name\\":\\"$TAG\\",\\"generate_release_notes\\":true}")
+        
+                            RELEASE_ID=$(echo $CREATE_RESPONSE | jq -r '.id')
+                        else
+                            echo "Release already exists. Using RELEASE_ID=$RELEASE_ID"
+                        fi
+        
+                        echo "Checking if asset already exists..."
+        
+                        ASSET_ID=$(curl -s \
+                          -H "Authorization: token $GITHUB_TOKEN" \
+                          https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets \
+                          | jq -r ".[] | select(.name==\\"$ASSET_NAME\\") | .id")
+        
+                        if [ ! -z "$ASSET_ID" ] && [ "$ASSET_ID" != "null" ]; then
+                            echo "Asset exists. Deleting old asset id=$ASSET_ID"
+        
+                            curl -s -X DELETE \
+                              -H "Authorization: token $GITHUB_TOKEN" \
+                              https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/assets/$ASSET_ID
+                        fi
+        
+                        echo "Uploading new artifact..."
+        
+                        curl -s -X POST \
                           -H "Authorization: token $GITHUB_TOKEN" \
                           -H "Content-Type: application/java-archive" \
                           --data-binary @$JAR_FILE \
-                          "https://uploads.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets?name=$(basename $JAR_FILE)"
+                          "https://uploads.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets?name=$ASSET_NAME"
         
-                        echo "Release completed successfully!"
+                        echo "Release upload completed successfully!"
                     '''
                 }
             }
@@ -261,7 +292,12 @@ pipeline {
         // ------------------------
 
         stage('Build Docker Image') {
-            when { branch 'master' }
+            when {
+                anyOf {
+                    branch 'master'
+                    branch 'main'
+                }
+            }
             steps {
                 echo "Building Docker image..."
                 sh "docker build -t ${DOCKER_IMAGE} ."
@@ -269,7 +305,12 @@ pipeline {
         }
 
         stage('Push Docker Image (Mock)') {
-            when { branch 'master' }
+            when {
+                anyOf {
+                    branch 'master'
+                    branch 'main'
+                }
+            }
             steps {
                 echo "Mock pushing Docker image..."
                 echo "docker push ${DOCKER_IMAGE}"
@@ -277,7 +318,12 @@ pipeline {
         }
 
         stage('Deploy to Dev (Mock)') {
-            when { branch 'master' }
+            when {
+                anyOf {
+                    branch 'master'
+                    branch 'main'
+                }
+            }
             steps {
                 echo "Mock deploy to Kubernetes..."
                 echo "kubectl apply -f k8s/deployment.yaml"
