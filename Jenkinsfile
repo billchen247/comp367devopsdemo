@@ -150,12 +150,13 @@ pipeline {
                                   | grep -m1 '"id":' \
                                   | grep -o '[0-9]\\+')
         
-                        if [ ! -z "$ASSET_ID" ]; then
-                            echo "Deleting old asset..."
-        
+                        if [ -n "$ASSET_ID" ]; then
+                            echo "Deleting old asset $ASSET_ID"
                             curl -s -X DELETE \
                               -H "Authorization: token $GITHUB_TOKEN" \
                               https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/assets/$ASSET_ID
+                        else
+                            echo "No existing asset to delete."
                         fi
         
                         echo "Uploading asset..."
