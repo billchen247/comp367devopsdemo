@@ -148,7 +148,7 @@ pipeline {
                         ASSET_ID=$(echo "$ASSET_RESPONSE" \
                                     | grep '"name": *"'$ASSET_NAME'"' -B5 \
                                     | grep '"id":' \
-                                    | grep -o '[0-9]\+') || true
+                                    | grep -o '[0-9][0-9]*') || true
         
                         if [ -n "$ASSET_ID" ]; then
                             echo "Deleting old asset $ASSET_ID"
