@@ -124,7 +124,7 @@ pipeline {
         
                         RELEASE_ID=$(echo "$RESPONSE" \
                                       | grep -m1 -o '"id":[[:space:]]*[0-9]*' \
-                                      | grep -o '[0-9]*')
+                                      | grep -o '[0-9]*')  || true
         
                         if [ -z "$RELEASE_ID" ]; then
                             echo "Creating release..."
@@ -146,9 +146,9 @@ pipeline {
                           https://api.github.com/repos/${GITHUB_REPO_NAME}/releases/$RELEASE_ID/assets)
                         
                         ASSET_ID=$(echo "$ASSET_RESPONSE" \
-                                  | grep -A1 "$ASSET_NAME" \
-                                  | grep -m1 '"id":' \
-                                  | grep -o '[0-9]\\+') || true
+                                    | grep '"name": *"'$ASSET_NAME'"' -B5 \
+                                    | grep '"id":' \
+                                    | grep -o '[0-9]\+') || true
         
                         if [ -n "$ASSET_ID" ]; then
                             echo "Deleting old asset $ASSET_ID"
