@@ -23,7 +23,7 @@ pipeline {
 
     environment {
         APP_NAME = "week7demo-app"
-        DOCKER_IMAGE = "docker.io/billchen247/comp367demorepo/week7demo-app:latest"
+        DOCKER_IMAGE = "billchen247/comp367demorepo:latest"
     }
 
     stages {
