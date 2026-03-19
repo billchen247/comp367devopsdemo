@@ -23,7 +23,7 @@ pipeline {
 
     environment {
         APP_NAME = "week7demo-app"
-        DOCKER_IMAGE = "myrepo/week7demo-app:latest"
+        DOCKER_IMAGE = "billchen247/comp367demorepo/week7demo-app:latest"
     }
 
     stages {
@@ -138,6 +138,16 @@ pipeline {
             steps {
                 echo "Building Docker image..."
                 sh "docker build -t ${DOCKER_IMAGE} ."
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([string(credentialsId: 'dockerhubtoken', variable: 'DOCKERHUB_TOKEN')]) {
+                    sh '''
+                        echo "$DOCKERHUB_TOKEN" | docker login -u billchen247 --password-stdin
+                    '''
+                }
             }
         }
 
