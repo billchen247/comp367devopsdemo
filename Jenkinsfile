@@ -23,7 +23,9 @@ pipeline {
 
     environment {
         APP_NAME = "week7demo-app"
-        DOCKER_IMAGE = "billchen247/comp367demorepo:latest"
+        DOCKERHUB_REPO = "billchen247/comp367demorepo"
+        IMAGE_NAME = "week7demo-app"
+        IMAGE_TAG = "latest"
     }
 
     stages {
@@ -137,7 +139,15 @@ pipeline {
             when { branch 'master' }
             steps {
                 echo "Building Docker image..."
-                sh "docker build -t ${DOCKER_IMAGE} ."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+            }
+        }
+
+        stage('Push Docker Image in local registry') {
+            when { branch 'master' }
+            steps {
+                echo "Mock pushing Docker image..."
+                echo "docker push ${DOCKER_IMAGE}"
             }
         }
 
@@ -146,18 +156,34 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'dockerhubtoken', variable: 'DOCKERHUB_TOKEN')]) {
                     sh '''
-                        docker login -u billchen247 -p $DOCKERHUB_TOKEN
+                        docker login docker.io -u billchen247 -p $DOCKERHUB_TOKEN
                         
                     '''
                 }
             }
         }
 
-        stage('Push Docker Image (Mock)') {
-            when { branch 'master' }
+        stage('Tag for Docker Hub') {
             steps {
-                echo "Mock pushing Docker image..."
-                echo "docker push ${DOCKER_IMAGE}"
+                sh """
+                    echo "Tagging image for Docker Hub..."
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} docker.io/${DOCKERHUB_REPO}/${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                sh """
+                    echo "Pushing image to Docker Hub..."
+                    docker push docker.io/${DOCKERHUB_REPO}/${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+
+        stage('Logout from Docker Hub') {
+            steps {
+                sh "docker logout docker.io"
             }
         }
 
