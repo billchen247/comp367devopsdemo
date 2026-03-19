@@ -167,7 +167,7 @@ pipeline {
             steps {
                 sh """
                     echo "Tagging image for Docker Hub..."
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} docker.io/${DOCKERHUB_REPO}/${IMAGE_NAME}:${IMAGE_TAG}
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} docker.io/${DOCKERHUB_REPO}:${IMAGE_TAG}
                 """
             }
         }
@@ -176,7 +176,7 @@ pipeline {
             steps {
                 sh """
                     echo "Pushing image to Docker Hub..."
-                    docker push docker.io/${DOCKERHUB_REPO}/${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push docker.io/${DOCKERHUB_REPO}:${IMAGE_TAG}
                 """
             }
         }
