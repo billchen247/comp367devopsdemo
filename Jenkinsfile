@@ -139,7 +139,7 @@ pipeline {
             when { branch 'master' }
             steps {
                 echo "Building Docker image..."
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} . "
             }
         }
 
@@ -147,7 +147,7 @@ pipeline {
             when { branch 'master' }
             steps {
                 echo "Mock pushing Docker image..."
-                echo "docker push ${DOCKER_IMAGE}"
+                echo "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
 
