@@ -142,10 +142,12 @@ pipeline {
         }
 
         stage('Docker Login') {
+            when { branch 'master' }
             steps {
                 withCredentials([string(credentialsId: 'dockerhubtoken', variable: 'DOCKERHUB_TOKEN')]) {
                     sh '''
-                        echo "$DOCKERHUB_TOKEN" | docker login -u billchen247 --password-stdin
+                        docker login -u billchen247 -p $DOCKERHUB_TOKEN
+                        
                     '''
                 }
             }
